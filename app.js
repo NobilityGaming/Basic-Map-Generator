@@ -1,11 +1,12 @@
+// Module Imports--------------------------------------
 const seedrandom = require('seedrandom');
 const Canvas = require('canvas');
 const fs = require('fs')
 
-// map variables
-var lenght = 250
-var witdh = 250
-var rng = seedrandom('Original Seed');  // the seed of the map
+// Map Variables---------------------------------------
+var lenght = 100
+var width = 100
+var rng = seedrandom('bruh');  // the seed of the map
 var inherent = 0.85;                    // % chance to inherent a tile (the "smoothness" of the map)
 var bias = 0.5;                         // bais between using oldhex2 (x) or oldhex1 (y)
 var upgradeocean = 0.5;                 // % chance to upgrade an ocean tile
@@ -22,12 +23,12 @@ var grass = `#00a746`;
 var forest = `#007f46`;
 var mountain = `#6a7a7a`;
 var snow = `#ffffff`;
-
-const canvas = Canvas.createCanvas(lenght, witdh);
+const canvas = Canvas.createCanvas(lenght, width);
 const out = fs.createWriteStream('test.png')
 const stream = canvas.createPNGStream()
 const ctx = canvas.getContext('2d');
 
+// Functions-------------------------------------------
 function componentToHex(c) {
     var hex = c.toString(16);
     return hex.length == 1 ? "0" + hex : hex;
@@ -37,15 +38,11 @@ function rgbToHex(r, g, b) {
     return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
 }
 
-x = 0
-y = 0
-while (x <= lenght - 1 && y <= witdh - 1) {
-
-    if (y > 0) {
-        var p = ctx.getImageData(x, y - 1, 1, 1).data;
-        var oldhex1 = rgbToHex(p[0], p[1], p[2])
+function main(x, y) {
+    var p = ctx.getImageData(x, y, 1, 1).data;
+        var oldhex = rgbToHex(p[0], p[1], p[2])
         num = rng()
-        if (oldhex1 == ocean) {
+        if (oldhex == ocean) {
             if (num <= upgradeocean) {
                 newhex = shore
             }
@@ -53,7 +50,7 @@ while (x <= lenght - 1 && y <= witdh - 1) {
                 newhex = ocean
             }
         }
-        if (oldhex1 == shore) {
+        if (oldhex == shore) {
             if (num <= upgradeshore) {
                 newhex = beach
             }
@@ -61,7 +58,7 @@ while (x <= lenght - 1 && y <= witdh - 1) {
                 newhex = ocean
             }
         }
-        if (oldhex1 == beach) {
+        if (oldhex == beach) {
             if (num <= upgradebeach) {
                 newhex = grass
             }
@@ -69,7 +66,7 @@ while (x <= lenght - 1 && y <= witdh - 1) {
                 newhex = shore
             }
         }
-        if (oldhex1 == grass) {
+        if (oldhex == grass) {
             if (num <= upgradegrass) {
                 newhex = forest
             }
@@ -77,7 +74,7 @@ while (x <= lenght - 1 && y <= witdh - 1) {
                 newhex = beach
             }
         }
-        if (oldhex1 == forest) {
+        if (oldhex == forest) {
             if (num <= upgradeforest) {
                 newhex = mountain
             }
@@ -85,7 +82,7 @@ while (x <= lenght - 1 && y <= witdh - 1) {
                 newhex = grass
             }
         }
-        if (oldhex1 == mountain) {
+        if (oldhex == mountain) {
             if (num <= upgrademountain) {
                 newhex = forest
             }
@@ -93,7 +90,7 @@ while (x <= lenght - 1 && y <= witdh - 1) {
                 newhex = snow
             }
         }
-        if (oldhex1 == snow) {
+        if (oldhex == snow) {
             if (num <= downgradesnow) {
                 newhex = mountain
             }
@@ -101,71 +98,27 @@ while (x <= lenght - 1 && y <= witdh - 1) {
                 newhex = snow
             }
         }
+        return [newhex, oldhex]
+}
+
+// Logic-----------------------------------------------
+x = 0
+y = 0
+while (x <= lenght - 1 && y <= width - 1) {
+
+    if (y > 0) {
+        var output = main(x, y-1)
+        var newhex = output[0]
+        var oldhex1 = output[1]
     }
 
     if (x > 0) {
-        var q = ctx.getImageData(x - 1, y, 1, 1).data;
-        var oldhex2 = rgbToHex(q[0], q[1], q[2])
-        num = rng()
-        if (oldhex2 == ocean) {
-            if (num <= upgradeocean) {
-                newhex = shore
-            }
-            else {
-                newhex = ocean
-            }
-        }
-        if (oldhex2 == shore) {
-            if (num <= upgradeshore) {
-                newhex = beach
-            }
-            else {
-                newhex = ocean
-            }
-        }
-        if (oldhex2 == beach) {
-            if (num <= upgradebeach) {
-                newhex = grass
-            }
-            else {
-                newhex = shore
-            }
-        }
-        if (oldhex2 == grass) {
-            if (num <= upgradegrass) {
-                newhex = forest
-            }
-            else {
-                newhex = beach
-            }
-        }
-        if (oldhex2 == forest) {
-            if (num <= upgradeforest) {
-                newhex = mountain
-            }
-            else {
-                newhex = grass
-            }
-        }
-        if (oldhex2 == mountain) {
-            if (num <= upgrademountain) {
-                newhex = forest
-            }
-            else {
-                newhex = snow
-            }
-        }
-        if (oldhex2 == snow) {
-            if (num <= downgradesnow) {
-                newhex = mountain
-            }
-            else {
-                newhex = snow
-            }
-        }
+        var output = main(x-1, y)
+        var newhex = output[0]
+        var oldhex2 = output[1]
     }
 
-    if (x == 0 || y == 0 || x == lenght - 1 || y == witdh - 1) {
+    if (x == 0 || y == 0 || x == lenght - 1 || y == width - 1) {
         hex = ocean
     }
 
